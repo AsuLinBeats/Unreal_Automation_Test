@@ -15,6 +15,16 @@ void FTextureCheckerModule::ShutdownModule()
 	// we call this function before unloading the module.
 }
 
+
+bool FTextureTest::RunTest(const FString& Parameters)
+{
+	int32 Result = 2+2;
+	TestEqual(TEXT("2+2 should equal 4"), Result, 4);
+
+	return true;
+}
+
+
 #undef LOCTEXT_NAMESPACE
 	
 IMPLEMENT_MODULE(FTextureCheckerModule, TextureChecker)

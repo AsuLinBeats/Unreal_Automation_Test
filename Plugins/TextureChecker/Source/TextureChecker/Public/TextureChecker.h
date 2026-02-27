@@ -4,6 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
+#include "Misc/AutomationTest.h"
+
+
 
 class FTextureCheckerModule : public IModuleInterface
 {
@@ -13,3 +16,10 @@ public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 };
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FTextureTest,
+	"TextureChecker.TextureTest",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter
+	)
+
