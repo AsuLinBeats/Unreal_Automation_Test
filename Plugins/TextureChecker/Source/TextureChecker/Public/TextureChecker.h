@@ -16,6 +16,11 @@ public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 };
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FSimpleTest,
+	"TextureChecker.SimpleTest",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter
+	)
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FTextureTest,
