@@ -1,0 +1,130 @@
+
+pipeline{
+    agent any
+    
+    environment {
+        // 临时清空代理相关的环境变量
+        HTTP_PROXY = ''
+        HTTPS_PROXY = ''
+        http_proxy = ''
+        https_proxy = ''
+        NO_PROXY = '*'
+        
+        // UE引擎位置
+        UE_PATH = "D:\\UE4\\UnrealEngine-4.27.2-release" // 这里先用本地进行环境配置
+    }
+    
+    parameters{
+        choice(
+            name: 'PLATFORM'
+            choices: ['Win64', 'Android','IOS']
+            description: 'Chooise Platform'
+        )
+        choice(
+            name: 'CONFIG'
+            choices: ['Development', 'Shipping','Debug', 'Test']
+            description: 'Chooise package type'
+        )
+    }
+    stages{
+        stage('Checkout'){
+            steps{
+                echo 'Checking latest code'
+                git(
+                    url: 'git@github.com:AsuLinBeats/Unreal_Automation_Test.git',
+                    credentialsId: 'Test1',
+                    branch: 'master'
+                )
+                bat 'git lfs pull'
+                
+            }
+        }
+        stage('Clean'){
+            steps{
+                echo 'Optional Stage: Clean intermediate file for rebuilding'
+            }
+        }
+        stage('Build'){
+             steps{
+            bat '''
+                echo UE Path is: %UE_PATH%
+                echo Now Running UAT...
+                echo Building project
+                
+                set "UAT_PARAMS_BUILD=BuildTarget -target=KuroTask_AutoTest -project=%WORKSPACE%\\KuroTask_AutoTest.uproject -Platform=Win64 -configuration=Development"
+                
+                call "%UE_PATH%\\Engine\\Build\\BatchFiles\\RunUAT.bat" %UAT_PARAMS_BUILD%
+                
+                if errorlevel 1 (
+                    echo UAT Build执行失败
+                    exit /b 1
+                ) else (
+                    echo UAT Build执行成功
+                )
+            '''
+             }
+        }
+        
+        stage('Cook'){
+            steps{
+                bat '''
+                echo 'Cooking Project...'
+                set "UAT_PARAMS_COOK=BuildCookRun -project=%WORKSPACE%\\KuroTask_AutoTest.uproject -Platform=Win64 -configuration=Development -cook -skipbuild"
+                
+                call "%UE_PATH%\\Engine\\Build\\BatchFiles\\RunUAT.bat" %UAT_PARAMS_COOK%
+                
+                if errorlevel 1 (
+                    echo UAT Cook执行失败
+                    exit /b 1
+                ) else (
+                    echo UAT Cook执行成功
+                )
+                '''
+            }
+        }
+         stage('Staging'){
+            steps{
+                echo 'Staging...'
+                bat '''
+                echo 'Packageing Project...'
+                set "UAT_PARAMS_STAGE=BuildCookRun -project=%WORKSPACE%\\KuroTask_AutoTest.uproject -Platform=Win64 -configuration=Development" -stage -skipbuild -skipcook -skippak -skiparchive -noP4
+                
+                call "%UE_PATH%\\Engine\\Build\\BatchFiles\\RunUAT.bat" %UAT_PARAMS_STAGE%
+                
+                if errorlevel 1 (
+                    echo UAT Package执行失败
+                    exit /b 1
+                ) else (
+                    echo UAT Package执行成功
+                )
+                '''
+            }
+        }
+        stage('Packaging'){
+            steps{
+                echo 'Packaging...'
+                bat '''
+                echo 'Packageing Project...'
+                set "UAT_PARAMS_PACKAGE=BuildCookRun -project=%WORKSPACE%\\KuroTask_AutoTest.uproject -Platform=Win64 -configuration=Development" -pak -noP4
+                
+                call "%UE_PATH%\\Engine\\Build\\BatchFiles\\RunUAT.bat" %UAT_PARAMS_PACKAGE%
+                
+                if errorlevel 1 (
+                    echo UAT Package执行失败
+                    exit /b 1
+                ) else (
+                    echo UAT Package执行成功
+                )
+                '''
+            }
+        }
+        // post{
+        //     success{
+        //         echo 'Build Successfully!!!!'
+        //     }
+        //     failure{
+        //         echo "Build failed"
+        //     }
+        // }
+    }
+}
