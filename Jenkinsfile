@@ -314,8 +314,17 @@ pipeline{
                 bat '''
                     echo Test Project via Auto Test System in ue4
                     
-                    call "%UE_PATH%\\Engine\\Binaries\\Win64\\UE4Editor-cmd.exe" "%WORKSPACE%\\KuroTask_AutoTest.uproject" -unattended -nop4 -nosplash -nullrhi -ExecCmds="Automation RunTests TextureChecker; Quit"  -testexit="Automation Test Queue Empty"
+                    call "%UE_PATH%\\Engine\\Binaries\\Win64\\UE4Editor-Cmd.exe" ^
+                    "%WORKSPACE%\\KuroTask_AutoTest.uproject" ^
+                    -run=Automation ^
+                    -test=TextureChecker ^
+                    -unattended ^
+                    -nop4 ^
+                    -nosplash ^
+                    -stdout ^
+                    -FullStdOutLogOutput
                 '''
+                    //call "%UE_PATH%\\Engine\\Binaries\\Win64\\UE4Editor-cmd.exe" "%WORKSPACE%\\KuroTask_AutoTest.uproject" -unattended -nop4 -nosplash -nullrhi -ExecCmds="Automation RunTests TextureChecker; Quit"  -testexit="Automation Test Queue Empty"
             }
         }
     }
