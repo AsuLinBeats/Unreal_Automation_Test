@@ -317,7 +317,7 @@ pipeline{
                     call "%UE_PATH%\\Engine\\Binaries\\Win64\\UE4Editor-Cmd.exe" ^
                     "%WORKSPACE%\\KuroTask_AutoTest.uproject" ^
                     -unattended -nop4 -nosplash ^
-                    -ExecCmds="Automation RunTests KuroTask_AutoTest.TextureChecker; Quit" ^
+                    -ExecCmds="Automation RunTests TextureChecker; Automation WaitForTests; Quit" ^
                     -log -stdout -FullStdOutLogOutput
 
                     REM 防止 UE 返回 1 导致 Jenkins 失败
