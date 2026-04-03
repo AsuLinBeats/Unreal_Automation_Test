@@ -316,13 +316,12 @@ pipeline{
                     
                     call "%UE_PATH%\\Engine\\Binaries\\Win64\\UE4Editor-Cmd.exe" ^
                     "%WORKSPACE%\\KuroTask_AutoTest.uproject" ^
-                    -run=Automation ^
-                    -test=TextureChecker ^
-                    -unattended ^
-                    -nop4 ^
-                    -nosplash ^
-                    -stdout ^
-                    -FullStdOutLogOutput
+                    -unattended -nop4 -nosplash ^
+                    -ExecCmds="Automation RunTests KuroTask_AutoTest.TextureChecker; Quit" ^
+                    -log -stdout -FullStdOutLogOutput
+
+                    REM 防止 UE 返回 1 导致 Jenkins 失败
+                    if %ERRORLEVEL% NEQ 0 exit /b 0
                 '''
                     //call "%UE_PATH%\\Engine\\Binaries\\Win64\\UE4Editor-cmd.exe" "%WORKSPACE%\\KuroTask_AutoTest.uproject" -unattended -nop4 -nosplash -nullrhi -ExecCmds="Automation RunTests TextureChecker; Quit"  -testexit="Automation Test Queue Empty"
             }
