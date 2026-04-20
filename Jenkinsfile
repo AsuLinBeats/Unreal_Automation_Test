@@ -306,6 +306,15 @@ pipeline{
                 }
             }
         }
+        stage('Generate Changelist'){
+            steps{
+                echo 'Summarising changed file and generating changelist'
+                echo 'The file will be generated at root path'
+                bat '''
+                    git diff --name-only HEAD~1 > ChangedFile.txt
+                '''
+            }
+        }
         stage('Testing'){
             steps{
                 echo 'Testing'
