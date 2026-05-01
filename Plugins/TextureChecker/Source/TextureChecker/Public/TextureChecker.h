@@ -6,7 +6,12 @@
 #include "Modules/ModuleManager.h"
 #include "Misc/AutomationTest.h"
 
-
+//UENUM()
+//enum TestAssetType
+//{
+	
+	
+//};
 
 class FTextureCheckerModule : public IModuleInterface
 {

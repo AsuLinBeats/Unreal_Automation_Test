@@ -1,0 +1,4 @@
+Content/Fantasy_Props/Amphora/Materials/M_Amphora.uasset
+Plugins/TextureChecker/Source/TextureChecker/Private/TextureChecker.cpp
+Content/Texture/square-crop.uasset
+Content/Texture/1a67f92a8f7f13e7f416c509878894c3.uasset

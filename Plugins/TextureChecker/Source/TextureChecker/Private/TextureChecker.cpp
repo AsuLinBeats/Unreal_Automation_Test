@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "TextureChecker.h"
+#include "CoreMinimal.h" 
 
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Misc/FileHelper.h"
@@ -137,12 +138,16 @@ UTexture2D* FTextureCheckerHelper::GetTextureByPath(FString FilePath)
 	IAssetRegistry& AssetRegistry = AssetRegistryModule.Get();
 	
 	
-	FAssetData AssetData = AssetRegistry.GetAssetByObjectPath(FName(*FilePath));
+	TArray<FAssetData> AssetDataArray;
+	AssetRegistry.GetAssetsByPackageName(FName(*FilePath),AssetDataArray);
 
-
-	if (UTexture2D* Texture = Cast<UTexture2D>(AssetData.GetAsset()))
+	for (FAssetData& AssetData : AssetDataArray)
 	{
-		return Texture;
+		if (UTexture2D* Texture = Cast<UTexture2D>(AssetData.GetAsset()))
+		{
+			return Texture;
+			
+		}
 		
 	}
 	return nullptr;
@@ -191,6 +196,7 @@ bool FTextureCheckerHelper::CheckTexture(const TArray<UTexture2D*>& Textures, TA
 			OutErrors.Add(FString::Printf(TEXT("Unqualified texture found: %s"),*Texture->GetName()));
 		}
 	}
+	
 
 	return FailCount == 0;
 }
@@ -203,30 +209,26 @@ bool FTextureTest::RunTest(const FString& Parameters)
 	// FName TargetName = FName(*TargetPath);
 	// TArray<FString> TestOutput;
 	
-	// 读取changelist文件并转换格式
-	TArray<FString> TargetPaths = FTextureCheckerHelper::ReadChangelist("ChangeList.txt");
+	// 读取Jenkins生成的changelist文件并转换格式
+	TArray<FString> TargetPaths = FTextureCheckerHelper::ReadChangelist("ChangedFile.txt");
 	TargetPaths = FTextureCheckerHelper::ConvertGitPathsToUE(TargetPaths);
-	for (FString TargetPath: TargetPaths)
-	{
-		FName TargetName = FName(*TargetPath);
-		GetTexturesByPath(TargetName);
-		
-	}
 	// 分辨类型
-	
-	
-
 	
 	TArray<FString> Infos;
 	TArray<FString> Errors;
 	int32 PassCount = 0;
 	int32 ErrorCount = 0;
-
+	
 	// FOR NON-CODE ASSET
 	TArray<UTexture2D*> Textures = FTextureCheckerHelper::GetTexturesByPath(TargetPaths);
+	// DEBUG START. DEBUG ONLY
+	// for (FString TestPath : TargetPaths){
+	// 	// 期望看到UE路径
+	// 	UE_LOG(LogTemp, Display, TEXT("Checking %s..."), *TestPath);
+	// }
+	// DEBUG END
 	FTextureCheckerHelper::CheckTexture(Textures, Errors, Infos, PassCount, ErrorCount);
 	
-
 	if (PassCount > 0)
 	{
 		AddInfo((FString::Printf(TEXT("Number of qualified texture: %d"), PassCount)));
