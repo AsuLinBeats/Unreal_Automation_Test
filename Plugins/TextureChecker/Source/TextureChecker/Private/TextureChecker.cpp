@@ -28,46 +28,6 @@ bool FSimpleTest::RunTest(const FString& Parameters)
 	return true;
 }
 
-// bool FTextureTest::RunTest(const FString& Parameters)
-// {
-// 	FString TargetPath = TEXT("/Game/Texture");
-// 	FName TargetName = FName(*TargetPath);
-// 	TArray<FString> TestOutput;
-//
-// 	// 资源获取
-// 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
-// 	IAssetRegistry& AssetRegistry = AssetRegistryModule.Get();
-//
-// 	TArray<FAssetData> AssetDataList;
-// 	AssetRegistryModule.Get().GetAssetsByPath(TargetName,AssetDataList);
-//
-// 	int32 ErrorCount = 0;
-// 	for (FAssetData& AssetData : AssetDataList)
-// 	{
-// 		// UTexture2d是真正的贴图，UTexture只是个基类，所以这里直接这么写
-// 		UTexture2D* Texture = Cast<UTexture2D>(AssetData.GetAsset()); // 2D
-// 		if (!Texture)
-// 		{
-// 			continue;
-// 		} 
-// 		// 判断尺寸
-// 		int32 Width = Texture->GetSizeX();
-// 		int32 Height = Texture->GetSizeY();
-// 		if (Width <= 0 && Height <= 0) continue;
-// 		
-// 		if (Width != Height)
-// 		{
-// 			ErrorCount++;
-// 			AddError(FString::Printf(TEXT("Unqualified texture found: %s"),*Texture->GetName()));
-// 		}
-// 	}
-// 	if (ErrorCount > 0)
-// 	{
-// 		AddError((FString::Printf(TEXT("Number of unqualified texture: %d"), ErrorCount)));
-// 	}
-// 	return true;
-// }
-
 TArray<FString> FTextureCheckerHelper::ReadChangelist(FString FileName)
 {
 	TArray<FString> FilePaths;
@@ -110,25 +70,6 @@ FString FTextureCheckerHelper::ConvertGitPathToUE(FString Path){
 	return FString::Printf(TEXT("/Game/%s"), *Path);
 } 
 
-/*
-TArray<UTexture2D*> FTextureCheckerHelper::GetTexturesByPath(FString FilePath)
-{
-	TArray<UTexture2D*> Result;
-	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
-	IAssetRegistry& AssetRegistry = AssetRegistryModule.Get();
-
-	TArray<FAssetData> AssetDataList;
-	AssetRegistryModule.Get().GetAssetsByPath(FName(*FilePath),AssetDataList);
-
-	for (FAssetData& AssetData : AssetDataList){
-		if (UTexture2D* Texture = Cast<UTexture2D>(AssetData.GetAsset()))
-		{
-			Result.Add(Texture);
-		}
-	}
-	return Result;
-}
-*/
 
 // 可以改成数组操作版本
 UTexture2D* FTextureCheckerHelper::GetTextureByPath(FString FilePath)
@@ -340,68 +281,6 @@ bool FTextureTest::RunTest(const FString& Parameters)
 	}
 	return true;
 }
-/*
-bool FTextureTest::RunTest(const FString& Parameters)
-{
-	// 合并了下之前的情况
-	// FString TargetPath = TEXT("/Game/Texture");
-	// FName TargetName = FName(*TargetPath);
-	// TArray<FString> TestOutput;
-	
-	// 读取changelist文件并转换格式
-	TArray<FString> TargetPaths = FTextureCheckerHelper::ReadChangelist("ChangeList.txt");
-	TargetPaths = FTextureCheckerHelper::ConvertGitPathsToUE(TargetPaths);
-	FString TargetPath;
-	FName TargetName = FName(*TargetPath);
-	// 分辨类型
-	
-	TArray<FString> TestOutput;
-
-	// FOR NON-CODE ASSET
-	// 资源获取
-	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
-	IAssetRegistry& AssetRegistry = AssetRegistryModule.Get();
-
-	TArray<FAssetData> AssetDataList;
-	AssetRegistryModule.Get().GetAssetsByPath(TargetName,AssetDataList);
-
-	int32 PassCount = 0;
-	int32 ErrorCount = 0;
-	for (FAssetData& AssetData : AssetDataList)
-	{
-		// UTexture2d是真正的贴图，UTexture只是个基类，所以这里直接这么写
-		UTexture2D* Texture = Cast<UTexture2D>(AssetData.GetAsset()); // 2D
-		if (!Texture)
-		{
-			continue;
-		} 
-		// 判断尺寸
-		int32 Width = Texture->GetSizeX();
-		int32 Height = Texture->GetSizeY();
-		if (Width <= 0 && Height <= 0) continue;
-		
-		if (Width != Height)
-		{
-			PassCount++;
-			AddInfo(FString::Printf(TEXT("Qualified texture found: %s"),*Texture->GetName()));
-		}else
-		{
-			ErrorCount++;
-			AddError(FString::Printf(TEXT("Unqualified texture found: %s"),*Texture->GetName()));
-		}
-	}
-	if (PassCount > 0)
-	{
-		AddInfo((FString::Printf(TEXT("Number of qualified texture: %d"), PassCount)));
-	}
-	if (ErrorCount > 0)
-	{
-		AddError((FString::Printf(TEXT("Number of unqualified texture: %d"), ErrorCount)));\
-		return false;
-	}
-	return true;
-}
-*/
 
 #undef LOCTEXT_NAMESPACE
 	
