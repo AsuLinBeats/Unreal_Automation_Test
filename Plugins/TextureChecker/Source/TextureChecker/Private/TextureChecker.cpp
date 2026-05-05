@@ -154,6 +154,28 @@ UTexture2D* FTextureCheckerHelper::GetTextureByPath(FString FilePath)
 
 }
 
+FAssetData FTextureCheckerHelper::GetAssetDataByPath(FString FilePath)
+{
+	TArray<UTexture2D*> Result;
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
+	IAssetRegistry& AssetRegistry = AssetRegistryModule.Get();
+	
+	
+	TArray<FAssetData> AssetDataArray;
+	AssetRegistry.GetAssetsByPackageName(FName(*FilePath),AssetDataArray);
+
+	for (FAssetData& AssetData : AssetDataArray)
+	{
+		if (AssetData.IsValid())
+		{
+			return AssetData;
+			
+		}
+		
+	}
+	return nullptr;
+}
+
 TArray<UTexture2D*> FTextureCheckerHelper::GetTexturesByPath(TArray<FString> FilePaths)
 {
 	TArray<UTexture2D*> Result;
@@ -201,6 +223,44 @@ bool FTextureCheckerHelper::CheckTexture(const TArray<UTexture2D*>& Textures, TA
 	return FailCount == 0;
 }
 
+FAssetTestClassification FTextureCheckerHelper::ClassfyPath(const FString FilePaths)
+{
+	FAssetTestClassification Classification;
+	// 对原始的git路径进行判断
+	if (FilePaths.EndsWith(".uasset"))
+	{
+		FString UEPaths = FTextureCheckerHelper::ConvertGitPathToUE(FilePaths);
+		if (!UEPaths.IsEmpty())
+		{
+			FAssetData AssetData = FTextureCheckerHelper::GetAssetDataByPath(UEPaths);
+			Classification.AssetData = AssetData;
+			UObject* Asset = AssetData.GetAsset();
+			Classification.Category = IdentifyAssetType(Asset);
+		}
+		
+	}
+	else if (FilePaths.EndsWith(".cpp") || FilePaths.EndsWith(".h"))
+	{
+		Classification.Category = ETestAssetCategory::Code;
+		Classification.CodeFilePath = FilePaths;
+	}
+	return Classification;
+}
+
+ETestAssetCategory FTextureCheckerHelper::IdentifyAssetType(UObject* Asset)
+{
+	if (!Asset) return ETestAssetCategory::Unknown;
+
+	if (Cast<UTexture2D>(Asset)) return ETestAssetCategory::Texture2D;
+	if (Cast<UMaterial>(Asset)) return ETestAssetCategory::Material;
+	if (Cast<UBlueprint>(Asset)) return ETestAssetCategory::Blueprint;
+	if (Cast<UStaticMesh>(Asset)) return ETestAssetCategory::StaticMesh;
+	if (Cast<USkeletalMesh>(Asset)) return ETestAssetCategory::SkeletonMesh;
+
+	return ETestAssetCategory::Unknown;
+	
+}
+
 
 bool FTextureTest::RunTest(const FString& Parameters)
 {
@@ -211,23 +271,63 @@ bool FTextureTest::RunTest(const FString& Parameters)
 	
 	// 读取Jenkins生成的changelist文件并转换格式
 	TArray<FString> TargetPaths = FTextureCheckerHelper::ReadChangelist("ChangedFile.txt");
-	TargetPaths = FTextureCheckerHelper::ConvertGitPathsToUE(TargetPaths);
-	// 分辨类型
+	// 检查类型
+	TArray<FAssetTestClassification> Classifications;
+	for (FString& Path : TargetPaths)
+	{
+		if (Path.IsEmpty()) continue;
+		Classifications.Add(FTextureCheckerHelper::ClassfyPath(Path));
+	}
+	// 收集数组
+	TArray<UTexture2D*> Textures;
+	TArray<UMaterial*> Materials;
+	TArray<FString> CodeFiles;
+
+	for (FAssetTestClassification Classification : Classifications)
+	{
+		switch (Classification.Category)
+		{
+		case ETestAssetCategory::Texture2D:
+			
+			if (UTexture2D* Tex = Cast<UTexture2D>(Classification.AssetData.GetAsset()))
+			{
+				Textures.Add(Tex);
+			}
+			break;
+		
+		case ETestAssetCategory::Material:
+			
+			if (UMaterial* Mat = Cast<UMaterial>(Classification.AssetData.GetAsset()))
+			{
+				Materials.Add(Mat);
+			}
+			break;
+			
+		case ETestAssetCategory::Code:
+			CodeFiles.Add(Classification.CodeFilePath);
+			break;
+		}
+	}
+	
 	
 	TArray<FString> Infos;
 	TArray<FString> Errors;
 	int32 PassCount = 0;
 	int32 ErrorCount = 0;
 	
-	// FOR NON-CODE ASSET
-	TArray<UTexture2D*> Textures = FTextureCheckerHelper::GetTexturesByPath(TargetPaths);
-	// DEBUG START. DEBUG ONLY
-	// for (FString TestPath : TargetPaths){
-	// 	// 期望看到UE路径
-	// 	UE_LOG(LogTemp, Display, TEXT("Checking %s..."), *TestPath);
-	// }
-	// DEBUG END
-	FTextureCheckerHelper::CheckTexture(Textures, Errors, Infos, PassCount, ErrorCount);
+	if (Textures.Num() > 0)
+	{
+		FTextureCheckerHelper::CheckTexture(Textures, Errors, Infos, PassCount, ErrorCount);
+	}
+	if (Materials.Num() > 0)
+	{
+		UE_LOG(LogTemp, Display, TEXT("Run Test for material"));
+	}
+	if (CodeFiles.Num() > 0)
+	{
+		UE_LOG(LogTemp, Display, TEXT("Run Test for code"));
+	}
+	
 	
 	if (PassCount > 0)
 	{
